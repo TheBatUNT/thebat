@@ -1,0 +1,30 @@
+#map{
+	color: white;
+	font-size: 50px;
+	background-color: red;
+	border: none;
+	width: 100%;
+	height: 50%;
+}
+#calibrate{
+	color: white;
+	font-size: 50px;
+	background-color: blue;
+	border: none;
+	width: 100%;
+	height: 50%;
+}
+#ext{
+	color: white;
+	font-size: 50px;
+	background-color: red;
+	border-color: black;
+	width: 100%;
+	height: 25%;
+}
+html{
+	height:100%;
+}
+body{
+	height: 100%;
+}
