@@ -63,9 +63,9 @@ void calibrate(){
     Serial.print(F("INVALID"));
   }
   Serial.print(latitude/samples, 6);
-  Serial.print(F(" "));
+  Serial.print(" ");
   Serial.print(longitude/samples, 6);
-  Serial.println();
+  Serial.print(" ");
   
 }
 void read_sensors(){
@@ -122,17 +122,35 @@ void print_all(){
   if(distance1 <= 200){
     Serial.print("SF ");
     Serial.print(distance1);// In inches
-    Serial.println();
+    Serial.print(" ");
+    //Serial.println();
+  }
+  else{
+    Serial.print("SF ");
+    Serial.print(0);// In inches
+    Serial.print(" ");
   }
   if(distance2 >= 100){
     Serial.print("SL ");
     Serial.print(distance2);// In inches
-    Serial.println();
+    Serial.print(" ");
+    //Serial.println();
+  }
+  else{
+    Serial.print("SL ");
+    Serial.print(0);// In inches
+    Serial.print(" ");
   }
   if(distance3 >= 100){
     Serial.print("SR ");
     Serial.print(distance3);// In inches
-    Serial.println();
+    Serial.print(" ");
+    //Serial.println();
+  }
+  else{
+    Serial.print("SR ");
+    Serial.print(0);// In inches
+    Serial.print(" ");
   }
 }
 //Print gps lat and long
@@ -148,23 +166,28 @@ Serial.print(F("LC "));
   {
     Serial.print(F("INVALID"));
   }
-  Serial.println();
+  //Serial.print(" ");
+  //Serial.println();
   
 }//end print_gps
 
+
 //Read gps Lat and long
 void read_gps(){
+  while(true){
   while (ss.available() > 0)
-    if (gps.encode(ss.read()))
+    if (gps.encode(ss.read())){
+      //gps.encode(ss.read());
       print_gps();
+      return;
+    }
    
   if (millis() > 5000 && gps.charsProcessed() < 10)
   {
     Serial.println(F("No GPS detected: check wiring."));
-    while(true);
   }
 
-  
+  }
 }//end read_gps
 
 
@@ -175,16 +198,19 @@ void loop() {
   {
     x=(Serial.read()-'0');
   }
-  if(x == 1 || distance1 == 0)
+  if(x == 1)
   {
+    print_all();
     calibrate();
     x=0;
   }
   else
   {
     print_all();
+    read_gps();
   }
-  read_gps();
-  //delay(150);
+  
+  Serial.println();
 }
+
 
