@@ -1,5 +1,4 @@
-const int sensor1 = 0;
-const int anPin2 = 3;
+const int sensor1 = 3;
 int distance1;
 int i=0,x = 0,num = 0;
 int sum1[100];
@@ -10,17 +9,19 @@ int error = 5; // the % between values that the sample fuction will read as the 
 
 void setup() {
   Serial.begin (9600);
-  pinMode(anPin2,OUTPUT);
+  pinMode(sensor1,INPUT);
 }
 void calibrate(){
+  /*
   Serial.print("C0");
   Serial.println();
-  digitalWrite(anPin2,LOW);
+ // digitalWrite(anPin2,LOW);
   delay(1000);
-  digitalWrite(anPin2,HIGH);
+//  digitalWrite(anPin2,HIGH);
   read_sensors();
 
   x = 0;
+  */
 }
 
 
@@ -54,16 +55,13 @@ void read_sensors(){
     distance1 = distance1 + ((sum1[i] + sum1[i+2])/2);
     num++;   
     }
-
   }
   //Take the average of the parts of the sample that are closet together.
   if(num > 0){
     distance1 = distance1/num;
   }
   else{
-
     read_sensors();
-
   }
 */
    int maxValue = 0, maxCount = 0, j = 0;
@@ -93,6 +91,11 @@ void print_all(){
   if(distance1 <= 200){
   Serial.print("SB ");
   Serial.print(distance1);// in feet
+  Serial.println();
+  }
+  else{
+  Serial.print("SB ");
+  Serial.print("0");// in feet
   Serial.println();
   }
   
