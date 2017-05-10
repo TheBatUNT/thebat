@@ -7,7 +7,11 @@ import math
 
 #calulate the distance between 2 coordinatescord
 def haversine(lat1, lon1, lat2, lon2):
-        R = 6371000 #Earth radius in meters
+        global measurement
+        if measurement == "feet":
+                R = 20902230.97 #Earth radius in feet
+        else:
+                R = 6371000 #Earth radius in meters
 
         dLat = radians(lat2 - lat1)
         dLon = radians(lon2 - lon1)
@@ -18,7 +22,8 @@ def haversine(lat1, lon1, lat2, lon2):
         c = 2*asin(sqrt(a))
  
         return R * c
-# given gps coordinates calculates the direction of cord1 with repect to cord 2
+
+# given gps coordinates calculates the direction of cord 1 with repect to cord 2
 def direction(lat2, long2, lat1, long1):
     margin = math.pi/90; #2 degree tolerance for cardinal directions
     o = lat1 - lat2;
@@ -46,11 +51,11 @@ def direction(lat2, long2, lat1, long1):
 #given 2 nodes directions calculates the turn the user will need to make   
 def direction2(node1,node2):
         if (node1 == node2) or (node1 == "NW" and node2 == "SE") or (node1 == "SE" and node2 == "NW")  or (node1 == "SW" and node2 == "NE") or (node1 == "NE" and node2 == "SW"):
-                return "straight"
+                return "Straight"
         elif (node1 == "SW" and node2 == "SE") or (node1 == "SE" and node2 == "NE") or (node1 == "NE" and node2 == "NW") or (node1 == "NW" and node2 == "SW"):
-                return "left"
+                return "Left Turn"
         elif (node1 == "SW" and node2 == "NW") or (node1 == "SE" and node2 == "SW") or (node1 == "NW" and node2 == "NE") or (node1 == "NE" and node2 == "SE"):
-                return "right"
+                return "Right Turn"
 
         else:
                 print "Error: Determining direction2"
@@ -65,13 +70,13 @@ def findid(index):
         return j
 def distTillTurn(index, dist):
         
-        if route[index]=="straight":
+        if route[index]=="Straight":
                 dist = dist+haversine(map[findid(path[index])][3], map[findid(path[index])][4], map[findid(path[index+1])][3], map[findid(path[index+1])][4])
         else:
                 dist = haversine(map[findid(path[index])][3], map[findid(path[index])][4], map[findid(path[index+1])][3], map[findid(path[index+1])][4])
         return dist
         
-# Openning DB connection 
+# Openning DB connection to get user lat and long
 
 db = MySQLdb.connect("localhost","root","hearmeout","thebat")
 # Preparing cursor object using cursor() method
@@ -89,19 +94,24 @@ try:
         currentlat = float(results[0][0])
         currentlong = float(results[0][1])
         exitid = results[0][2]
+        measurementId = results[0][3]
 
 except:
         print "Error: Unable to fetch current_user lat & long"
 del results
 
 print "User Coordinates: %f,%f" % (currentlat,currentlong)
-
+if measurementId == 0:
+        measurement = "feet"
+else:
+        measurement = "meters"
+#Cords for testing, location at discovery park.
 #currentlat=33.252671
 #currentlong=-97.152838
 
 sql = "SELECT * FROM maps"
 
-
+#Looks up avalible maped places and retrives the closests
 try:
 	#Execute SQL commands
 	cursor.execute(sql)
@@ -121,8 +131,9 @@ try:
         print "Closest map: %s" %minlocation
 
 except:
-	print "Error: Unable to fetch data"
+	print "Error: Unable to fetch data from maps DB"
 	 
+#Retrives the node information from DB, stores, and calcs nearist node
 sql = "SELECT * FROM coordinates"
 try:
         #Execute SQL commands
@@ -147,8 +158,9 @@ except:
 
 
 
-########################################################################################3
-### Calculates the sortest path given starting node and exit node
+########################################################################################
+### Calculates the sortest path given starting node and exit node ##### dijkstra's algorithm
+### https://gist.github.com/econchick/4666413
 ########################################################################################
 class Vertex:
     def __init__(self, node):
@@ -323,7 +335,7 @@ if __name__ == '__main__':
 # disconnect from server
 db.close
 #######################################################################
-##Get directions given path
+##Calculates directions given shortest
 #######################################################################
 
 path=path[::-1]
@@ -331,7 +343,7 @@ route = []
 
 i=0
 
-#print "Head %s %f meters to reach the first node" %(direction(currentlat, currentlong,map[findid(path[i])][3], map[findid(path[i])][4]), haversine(currentlat, currentlong,map[findid(path[i])][3], map[findid(path[i])][4])) 
+print "Head %s %f %s to reach the first node" %(direction(currentlat, currentlong,map[findid(path[i])][3], map[findid(path[i])][4]), haversine(currentlat, currentlong,map[findid(path[i])][3], map[findid(path[i])][4]),measurement)
 while i < len(path)-1:
         if i==0:
                 node1 = direction(map[findid(path[i])][3], map[findid(path[i])][4],map[findid(path[i+1])][3], map[findid(path[i+1])][4])
@@ -344,16 +356,55 @@ while i < len(path)-1:
         i = i+1
 print route
 dist = 0
+
+#upload directions to DB for display on web app
+db = MySQLdb.connect("localhost","root","hearmeout","thebat")
+# Preparing cursor object using cursor() method
+
+cursor = db.cursor()
+
+sql = "truncate table navigation"
+try:        
+	cursor.execute(sql)
+except:
+        print "Error: Unable to delete navigation database"
+routeFirstNode="Head "+direction(currentlat, currentlong,map[findid(path[0])][3], map[findid(path[0])][4])
+distFirstNode=int(haversine(currentlat, currentlong,map[findid(path[0])][3], map[findid(path[0])][4]))
+distFirstNodeString=str(distFirstNode) + " " + measurement
+try:
+        cursor.execute("""INSERT INTO navigation (Direction,Distance) VALUES (%s,%s)""",(routeFirstNode,distFirstNodeString))
+except:
+        print "Error: unable to update navigation table"
 for i in range(len(route)):
         if i == 0:
                 dist = distTillTurn(i,0)
+                if route[i] != "Straight":
+                        print "%f %s till %s" %(dist,measurement,route[i])
+                        #insert into database
+                        distround = int(round(dist,0))
+                        diststring = str(distround) + " " + measurement
+                        try:
+                                cursor.execute("""INSERT INTO navigation (Direction,Distance) VALUES (%s,%s)""",(route[i],diststring))
+                        except:
+                                print "Error: unable to update navigation sql table"
+                        dist=0
         else:
-                if route[i] != "straight":
-                        print "%f meters till %s turn" %(dist,route[i])
+                if route[i] != "Straight":
+                        print "%f %s till %s" %(dist,measurement,route[i])
+                        #insert into database
+                        distround = int(round(dist,0))
+                        diststring = str(distround) + " " + measurement
+                        try:
+                                cursor.execute("""INSERT INTO navigation (Direction,Distance) VALUES (%s,%s)""",(route[i],diststring))
+                        except:
+                                print "Error: unable to update update navigation table"
                 dist = distTillTurn(i,dist)
-print "%f meters till %s" %(dist, map[findid(path[i+1])][2])
-
+print "%f %s till %s" %(dist,measurement, map[findid(path[i+1])][2])
+distround = int(round(dist,0))
+diststring = str(distround) + " " + measurement
+try:
+        cursor.execute("""INSERT INTO navigation (Direction,Distance) VALUES (%s,%s)""",(map[findid(path[i+1])][2],diststring))
+except:
+        print "Error: Unable to update navigation table"
+db.commit()
 #print "Head %s %f meters to reach the first node then turn %s" %(direction(currentlat, currentlong,map[findid(path[i])][3], map[findid(path[i])][4]), haversine(currentlat, currentlong,map[findid(path[i])][3], map[findid(path[i])][4]))
-        
-
-        
