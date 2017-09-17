@@ -1,2 +1,9 @@
-# thebat
-Indoor Navigation and Object Detection for the Blind
+<p align="center">
+  <img src="https://raw.githubusercontent.com/TheBatUNT/thebat/master/images/theBatPosterTop.jpg">
+</p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/TheBatUNT/thebat/master/images/theBatPosterLeft.jpg">
+  <img src="https://raw.githubusercontent.com/TheBatUNT/thebat/master/images/theBatPosterMiddle.jpg">
+  <img src="https://raw.githubusercontent.com/TheBatUNT/thebat/master/images/theBatPosterRigth.jpg">
+</p>
